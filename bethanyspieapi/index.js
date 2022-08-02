@@ -1,10 +1,11 @@
 const express = require('express');
-const server = express();
+const app = express();
 const pieRepo = require('./repos/pieRepo')
 
-server.get('/', (req, res) => {
+app.use(express.json())
+
+app.get('/', (req, res, next) => {
     pieRepo.get((data) => {
-        console.log('from index: '+data);
         res.status(200).json({
             "status": 200,
             "statusText": "OK",
@@ -15,10 +16,28 @@ server.get('/', (req, res) => {
     (err) => { next(err) });
 });
 
-server.get('/api/', (req, res) => {
+app.post('/', (req, res, next) => {
+    let newData = req.body;
+    console.log('newData: ', newData)
+    if (!!newData) {
+        pieRepo.insert(newData, (data) => {
+            res.status(200).json({
+                "status": 200,
+                "statusText": "OK",
+                "message": "Pie successfully saved.",
+                "data": data
+            })
+        },
+        (err) => { next(err) });
+    } else {
+        console.log('No req body defined.')
+    }
+});
+
+app.get('/api/', (req, res) => {
     res.send('Apple');
 });
 
-server.listen('4242', () => {
+app.listen('4242', () => {
     console.log('Express server is running...');
 });
