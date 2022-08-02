@@ -53,9 +53,8 @@ const getById = (id, resolve, reject) => {
         // write to file and send back data
         if (pie) {
             resolve(pie);
-        } else {
-            reject('No matching pie found.')
         }
+        resolve();
 
     }, (err) => {
         reject(err);
@@ -89,11 +88,41 @@ const update = (id, newData, resolve) => {
     });
 };
 
+const remove = (id, resolve) => {
+    console.log('remove');
+
+    get((data) => {
+
+        // find pie by id
+        let index = data.findIndex(p => p.id == id);
+
+        // write to file and send back data
+        if (index != -1) {
+            data.splice(index, 1);
+            
+            let ws = fs.createWriteStream(FILE_NAME);
+            ws.write( JSON.stringify(data), () => {
+                console.log("Writing ended");
+                resolve(index);
+            }, (err) => {
+                reject(err);
+            });
+
+        } else {
+            console.log('No matching pie found.')
+        }
+
+    }, (err) => {
+        reject(err);
+    });
+};
+
 let pieRepo = {
     get: get,
     insert: insert,
     getById: getById,
-    update: update
+    update: update,
+    remove: remove
 };
 
 module.exports = pieRepo;
