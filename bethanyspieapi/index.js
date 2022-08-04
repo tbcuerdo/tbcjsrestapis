@@ -25,12 +25,12 @@ router.route('/:id')
 .get((req, res, next) => {
     let id = req.params.id;
     pieRepo.getById(id, (data) => {
-        if (data){
+        if (data.length > 0){
             res.status(200).json({
                 "status": 200,
                 "statusText": "OK",
-                "message": "All pies retrieved.",
-                "data": data
+                "message": "Pie "+id+" retrieved.",
+                "data": data[0]
             })
         } else {
             res.status(404).json({
@@ -52,12 +52,12 @@ router.route('/:id')
 router.route('/')
 .post((req, res, next) => {
     let newData = req.body;
-    pieRepo.insert(newData, (data) => {
+    pieRepo.insert(newData, (id) => {
         res.status(201).json({
             "status": 201,
             "statusText": "CREATED",
             "message": "Pie successfully saved.",
-            "data": data
+            "data": id
         })
     },
     (err) => { next(err) });
@@ -68,17 +68,16 @@ router.route('/:id')
 .put((req, res, next) => {
     let newData = req.body;
     let id = req.params.id;
-    pieRepo.getById(id, (data) => {
-        if (data) {
-            pieRepo.update(id, newData, (data) => {
-                res.status(200).json({
-                    "status": 200,
-                    "statusText": "UPDATED",
-                    "message": "Pie successfully updated.",
-                    "data": data
-                })
-            });
-        } else {
+    
+    pieRepo.update(id, newData, (data) => {
+        res.status(200).json({
+            "status": 200,
+            "statusText": "UPDATED",
+            "message": "Pie successfully updated.",
+            "data": data
+        });
+    }, (err) => {
+        if (err && err.code && err.code == 'NOT_FOUND') {
             res.status(404).json({
                 "status": 404,
                 "statusText": "Not found.",
@@ -87,29 +86,26 @@ router.route('/:id')
                     "code": "NOT_FOUND",
                     "message": "Not found"
                 }
-            })
+            });
+        } else {
+            next(err);
         }
-    }, (err) => next(err))
-    
+    });
 });
 
 //create a delete api that takes an id
 router.route('/:id')
 .delete((req, res, next) => {
     let id = req.params.id;
-    pieRepo.getById(id, (data) => {
-        if (data) {
-            pieRepo.remove(id, (data) => {
-                if (data) {
-                    res.status(204).json({
-                        "status": 204,
-                        "statusText": "DELETED",
-                        "message": "Pie successfully deleted.",
-                        "data": data
-                    })
-                }
-            });
-        } else {
+    pieRepo.remove(id, (data) => {
+        res.status(200).json({
+            "status": 200,
+            "statusText": "DELETED",
+            "message": "Pie successfully deleted.",
+            "data": data
+        });
+    }, (err) => {
+        if (err && err.code && err.code == 'NOT_FOUND') {
             res.status(404).json({
                 "status": 404,
                 "statusText": "Not found.",
@@ -118,9 +114,11 @@ router.route('/:id')
                     "code": "NOT_FOUND",
                     "message": "Not found"
                 }
-            })
+            });
+        } else {
+            next(err);
         }
-    }, (err) => { next(err) });
+    });
 });
 
 // set base url
